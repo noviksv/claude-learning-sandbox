@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kids Timer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <h1 class="app__title">Kids Timer</h1>
+
+    <section class="timer">
+      <svg class="ring" viewBox="0 0 200 200">
+        <circle class="ring__track" cx="100" cy="100" r="90" />
+        <circle class="ring__progress" cx="100" cy="100" r="90" />
+      </svg>
+      <div class="timer__display">
+        <span id="timeText" class="timer__time">00:00</span>
+        <span id="statusText" class="timer__status"></span>
+      </div>
+    </section>
+
+    <section class="presets" aria-label="Preset durations">
+      <button class="preset-btn" data-seconds="60">1 min</button>
+      <button class="preset-btn" data-seconds="300">5 min</button>
+      <button class="preset-btn" data-seconds="600">10 min</button>
+      <button class="preset-btn" data-seconds="900">15 min</button>
+      <button class="preset-btn" data-seconds="1200">20 min</button>
+    </section>
+
+    <section class="custom" aria-label="Custom duration">
+      <label class="custom__field">
+        <span>Minutes</span>
+        <input type="number" id="minutesInput" min="0" max="99" value="0" />
+      </label>
+      <label class="custom__field">
+        <span>Seconds</span>
+        <input type="number" id="secondsInput" min="0" max="59" value="0" />
+      </label>
+      <button id="customStartBtn" class="custom__start-btn">Set & Start</button>
+    </section>
+
+    <section class="controls">
+      <button id="pauseResumeBtn" class="control-btn" disabled>Pause</button>
+      <button id="resetBtn" class="control-btn" disabled>Reset</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

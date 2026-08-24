@@ -19,3 +19,20 @@ A personal sandbox for learning and experimenting with Claude Code, MCP, agent s
 ### Optional
 
 - Anthropic Claude certification (details TBD)
+
+## Kids Timer
+
+A simple, kid-friendly countdown timer website: pick a preset or custom duration, watch a circular countdown, and get an audio alert when time is up.
+
+Plain HTML/CSS/JS, no build step or dependencies.
+
+Lives in [`kids-timer/`](kids-timer).
+
+**Run it:**
+- Open `kids-timer/index.html` directly in a browser, or
+- Serve it locally, e.g. `cd kids-timer && python3 -m http.server` and visit `http://localhost:8000`
+
+**Files:**
+- `kids-timer/index.html` — page structure and controls
+- `kids-timer/styles.css` — styling
+- `kids-timer/script.js` — timer logic (countdown, presets, custom duration, pause/reset, alarm sound)
