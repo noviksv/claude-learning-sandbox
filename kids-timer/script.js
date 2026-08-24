@@ -18,6 +18,7 @@
   let endTime = 0; // Date.now() timestamp when the timer should reach 0
   let remainingAtPause = 0;
   let intervalId = null;
+  let audioCtx = null;
 
   function formatTime(totalSecs) {
     const m = Math.floor(totalSecs / 60)
@@ -38,9 +39,19 @@
     );
   }
 
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioCtx();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
   function playAlarm() {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioCtx();
+    const ctx = ensureAudioContext();
     const now = ctx.currentTime;
 
     [0, 0.35, 0.7].forEach((offset) => {
@@ -65,17 +76,16 @@
 
   function tick() {
     const remainingMs = endTime - Date.now();
-    const remainingSecs = Math.round(remainingMs / 1000);
-
-    if (remainingSecs <= 0) {
+    if (remainingMs <= 0) {
       finish();
       return;
     }
-    updateDisplay(remainingSecs);
+    updateDisplay(Math.ceil(remainingMs / 1000));
   }
 
   function start() {
     if (totalSeconds <= 0) return;
+    ensureAudioContext();
     state = "running";
     endTime = Date.now() + totalSeconds * 1000;
     statusText.textContent = "";
@@ -93,7 +103,7 @@
   function pause() {
     if (state !== "running") return;
     state = "paused";
-    remainingAtPause = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+    remainingAtPause = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
     clearInterval(intervalId);
     pauseResumeBtn.textContent = "Resume";
   }
@@ -139,8 +149,14 @@
   });
 
   customStartBtn.addEventListener("click", () => {
-    const minutes = Math.max(0, Math.floor(Number(minutesInput.value) || 0));
-    const seconds = Math.max(0, Math.floor(Number(secondsInput.value) || 0));
+    const minutes = Math.min(
+      99,
+      Math.max(0, Math.floor(Number(minutesInput.value) || 0))
+    );
+    const seconds = Math.min(
+      59,
+      Math.max(0, Math.floor(Number(secondsInput.value) || 0))
+    );
     const total = minutes * 60 + seconds;
     if (total <= 0) return;
     setDuration(total);
