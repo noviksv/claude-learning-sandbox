@@ -22,20 +22,18 @@ A personal sandbox for learning and experimenting with Claude Code, MCP, agent s
 
 ## Kids Timer
 
-A simple, kid-friendly countdown timer website: pick a preset or custom duration, watch a circular countdown, and get an audio alert when time is up.
+A simple, kid-friendly countdown timer website. See [`kids-timer/README.md`](kids-timer/README.md).
 
-Plain HTML/CSS/JS, no build step or dependencies.
+## Subagents
 
-Lives in [`kids-timer/`](kids-timer).
+Benefits of using subagents (e.g. Claude Code's `Task`/agent tool) instead of doing everything in the main conversation:
 
-**Run it:**
-- Open `kids-timer/index.html` directly in a browser, or
-- Serve it locally, e.g. `cd kids-timer && python3 -m http.server` and visit `http://localhost:8000`
+- **Context isolation** — a subagent does its work (searching, reading files, multi-step tasks) in its own context window, so noisy intermediate output (grep results, file dumps, tool traces) doesn't pollute the main conversation. You get back a distilled summary instead of everything it looked at.
+- **Parallelism** — multiple subagents can run at once to explore different parts of a codebase or investigate independent questions simultaneously, rather than working serially.
+- **Specialization** — agents with a narrower tool set and purpose (e.g. an explore-only agent, or a project-specific tester agent) are faster and more focused for that kind of work than a general-purpose pass.
+- **Non-blocking work (forks)** — a forked subagent can run in the background while the main conversation continues, useful for research or long tasks whose raw output isn't needed directly.
 
-**Files:**
-- `kids-timer/index.html` — page structure and controls
-- `kids-timer/styles.css` — styling
-- `kids-timer/script.js` — timer logic (countdown, presets, custom duration, pause/reset, alarm sound)
+Tradeoff: each fresh (non-fork) subagent starts with zero context, so spawning one for a trivial task costs more than it saves — best reserved for genuinely complex, multi-step, or context-heavy work.
 
 ## Claude Code Shortcuts Cheatsheet
 
