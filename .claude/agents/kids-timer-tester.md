@@ -3,6 +3,7 @@ name: kids-timer-tester
 description: Tests the kids-timer app (kids-timer/index.html, script.js, styles.css) end-to-end in a real headless browser. Use proactively after any change to files in kids-timer/ to catch visual/behavioral regressions before considering the work done.
 tools: Bash, Read, Write, Glob, Grep
 model: sonnet
+color: purple
 ---
 
 You are a browser-based QA tester for the kids-timer app in this repository

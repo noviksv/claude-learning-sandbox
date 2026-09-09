@@ -30,9 +30,11 @@
   const savedActionChipsEl = document.getElementById("savedActionChips");
   const savedRoutinesSection = document.getElementById("savedRoutinesSection");
   const savedRoutinesListEl = document.getElementById("savedRoutinesList");
+  const pauseSecondsInput = document.getElementById("pauseSecondsInput");
 
   const STORAGE_KEY_ACTIONS = "kidsTimerSavedActions";
   const STORAGE_KEY_ROUTINES = "kidsTimerSavedRoutines";
+  const STORAGE_KEY_PAUSE = "kidsTimerPauseSeconds";
 
   ringProgress.style.strokeDasharray = String(RING_CIRCUMFERENCE);
 
@@ -45,9 +47,26 @@
 
   let mode = "single"; // single | routine
   let routineActions = []; // builder list: { name, seconds }
-  let routineQueue = []; // active run: { name, seconds }
+  let routineQueue = []; // active run: { name, seconds, isPause }
   let routineIndex = -1;
   let routineAdvanceTimeoutId = null;
+
+  function loadPauseSeconds() {
+    const stored = localStorage.getItem(STORAGE_KEY_PAUSE);
+    if (stored === null) return 3;
+    const raw = Number(stored);
+    return Number.isFinite(raw) && raw >= 0 ? raw : 3;
+  }
+
+  function savePauseSeconds(value) {
+    try {
+      localStorage.setItem(STORAGE_KEY_PAUSE, String(value));
+    } catch {
+      // localStorage unavailable (private browsing, quota) - saving is best-effort
+    }
+  }
+
+  let pauseSeconds = loadPauseSeconds(); // routine-wide break duration between steps
 
   function loadStored(key) {
     try {
@@ -121,6 +140,22 @@
     });
   }
 
+  function playBreakChime() {
+    const ctx = ensureAudioContext();
+    const now = ctx.currentTime;
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = 523;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.2);
+  }
+
   function setDuration(seconds) {
     totalSeconds = seconds;
     updateDisplay(seconds);
@@ -169,12 +204,15 @@
   }
 
   function finish() {
+    const finishedStep = mode === "routine" ? routineQueue[routineIndex] : null;
+
     state = "finished";
     clearInterval(intervalId);
     updateDisplay(0);
     ringProgress.classList.add("is-finished");
+    ringProgress.classList.remove("is-routine-pause");
     pauseResumeBtn.disabled = true;
-    playAlarm();
+    finishedStep && finishedStep.isPause ? playBreakChime() : playAlarm();
 
     if (mode === "routine" && routineQueue.length > 0) {
       const isLastAction = routineIndex >= routineQueue.length - 1;
@@ -182,11 +220,11 @@
       if (isLastAction) {
         finishRoutine();
       } else {
-        statusText.textContent = "Time's up! Next up...";
+        statusText.textContent = finishedStep.isPause ? "Break's over!" : "Time's up! Next up...";
         routineAdvanceTimeoutId = setTimeout(() => {
           routineAdvanceTimeoutId = null;
           routineIndex += 1;
-          startCurrentRoutineAction();
+          startCurrentRoutineStep();
         }, 1500);
       }
       return;
@@ -204,6 +242,8 @@
     statusText.textContent = "";
     statusText.classList.remove("is-finished");
     ringProgress.classList.remove("is-finished");
+    ringProgress.classList.remove("is-routine-pause");
+    actionNameText.classList.remove("is-routine-pause");
     pauseResumeBtn.disabled = true;
     pauseResumeBtn.textContent = "Pause";
     resetBtn.disabled = true;
@@ -353,6 +393,7 @@
     routineQueue.forEach((action, index) => {
       const li = document.createElement("li");
       li.className = "routine-progress__item";
+      if (action.isPause) li.classList.add("is-pause");
       if (index < routineIndex) li.classList.add("is-done");
       if (index === routineIndex) li.classList.add("is-current");
       li.textContent = action.name;
@@ -360,26 +401,49 @@
     });
   }
 
-  function startCurrentRoutineAction() {
-    const action = routineQueue[routineIndex];
-    actionNameText.textContent = action.name;
-    stepIndicatorText.textContent = `Step ${routineIndex + 1} of ${routineQueue.length}`;
+  function startCurrentRoutineStep() {
+    const step = routineQueue[routineIndex];
+    ringProgress.classList.toggle("is-routine-pause", !!step.isPause);
+    actionNameText.classList.toggle("is-routine-pause", !!step.isPause);
+
+    if (step.isPause) {
+      const realStepsBefore = routineQueue
+        .slice(0, routineIndex)
+        .filter((s) => !s.isPause).length;
+      actionNameText.textContent = "Break time!";
+      stepIndicatorText.textContent = `Up next: Step ${realStepsBefore + 1} of ${routineActions.length}`;
+    } else {
+      const realStepNum = routineQueue
+        .slice(0, routineIndex + 1)
+        .filter((s) => !s.isPause).length;
+      actionNameText.textContent = step.name;
+      stepIndicatorText.textContent = `Step ${realStepNum} of ${routineActions.length}`;
+    }
+
     renderRoutineProgress();
-    setDuration(action.seconds);
+    setDuration(step.seconds);
     start();
   }
 
   function startRoutine() {
     if (routineActions.length === 0) return;
-    routineQueue = routineActions.map((action) => ({ ...action }));
+    routineQueue = [];
+    routineActions.forEach((action, index) => {
+      routineQueue.push({ ...action, isPause: false });
+      const isLast = index === routineActions.length - 1;
+      if (!isLast && pauseSeconds > 0) {
+        routineQueue.push({ name: "Break", seconds: pauseSeconds, isPause: true });
+      }
+    });
     routineIndex = 0;
     routineBuilderEl.hidden = true;
     routineProgressEl.hidden = false;
-    startCurrentRoutineAction();
+    startCurrentRoutineStep();
   }
 
   function finishRoutine() {
     actionNameText.textContent = "";
+    actionNameText.classList.remove("is-routine-pause");
     stepIndicatorText.textContent = "";
     statusText.textContent = "Routine complete! 🎉";
     routineBuilderEl.hidden = false;
@@ -465,6 +529,16 @@
 
   startRoutineBtn.addEventListener("click", startRoutine);
 
+  pauseSecondsInput.addEventListener("change", () => {
+    const clamped = Math.max(
+      0,
+      Math.min(60, Math.floor(Number(pauseSecondsInput.value) || 0))
+    );
+    pauseSeconds = clamped;
+    pauseSecondsInput.value = String(clamped);
+    savePauseSeconds(clamped);
+  });
+
   saveRoutineBtn.addEventListener("click", () => {
     if (routineActions.length === 0) return;
     const name = prompt("Name this routine:", "");
@@ -479,6 +553,7 @@
     renderSavedRoutinesList();
   });
 
+  pauseSecondsInput.value = String(pauseSeconds);
   renderSavedActionChips();
   renderSavedRoutinesList();
   updateDisplay(0);

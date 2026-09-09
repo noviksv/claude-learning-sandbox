@@ -7,6 +7,8 @@
   --accent-dark: #3672ad;
   --track: #e6e9ee;
   --danger: #e0654f;
+  --pause: #9b7fd4;
+  --pause-dark: #7a5cb0;
   --radius: 16px;
 }
 
@@ -74,6 +76,10 @@ body {
 
 .ring__progress.is-finished {
   stroke: var(--danger);
+}
+
+.ring__progress.is-routine-pause {
+  stroke: var(--pause);
 }
 
 .timer__display {
@@ -198,6 +204,10 @@ body {
   font-weight: 700;
   color: var(--accent-dark);
   min-height: 1.3em;
+}
+
+.timer__action.is-routine-pause {
+  color: var(--pause-dark);
 }
 
 .timer__step {
@@ -335,6 +345,16 @@ body {
 
 .routine-progress__item.is-done {
   text-decoration: line-through;
+}
+
+.routine-progress__item.is-pause {
+  font-style: italic;
+  color: var(--pause-dark);
+}
+
+.routine-progress__item.is-current.is-pause {
+  color: var(--pause-dark);
+  background: #f2ecfa;
 }
 
 .saved-routines {
