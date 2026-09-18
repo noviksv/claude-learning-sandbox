@@ -24,6 +24,10 @@ A personal sandbox for learning and experimenting with Claude Code, MCP, agent s
 
 A simple, kid-friendly countdown timer website. See [`kids-timer/README.md`](kids-timer/README.md).
 
+## Claude API Example
+
+A minimal Python program that queries the Claude API (one-shot and streaming). See [`api/README.md`](api/README.md).
+
 ## Subagents
 
 Benefits of using subagents (e.g. Claude Code's `Task`/agent tool) instead of doing everything in the main conversation:

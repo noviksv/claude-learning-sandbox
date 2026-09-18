@@ -1,0 +1,10 @@
+[project]
+name = "claude-api-example"
+version = "0.1.0"
+description = "Minimal example of querying the Claude API"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.51.0",
+    "python-dotenv>=1.1.0",
+]
